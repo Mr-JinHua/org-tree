@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>组织结构图</title>
+</head>
+<body>
+<canvas onClick="canvasClick()" width="1500" height="1000" id="cans" />
+<script type="text/javascript">
+
+let fixedL = 20;
+let canvas = document.getElementById('cans');
+let ctx = canvas.getContext('2d');
+
+canvas.onclick = function(e){
+	let box = canvas.getBoundingClientRect();
+	let x = e.clientX - box.left;
+	let y = e.clientY - box.top;
+	let clickBox = [x,y];
+	console.log(clickBox);
+	ctx.clearRect(0, 0, 1000, 1000);  
+	nowTree.initTree((sendNode) => {
+		sendNode.selected = null;
+		if(sendNode.x < x && sendNode.y < y && x < (sendNode.x + rectWidth) && y < (sendNode.y + rectHeight)) sendNode.selected = true;
+	});
+	nowTree.drawTree();
+}
+
+let rectWidth = fixedL*3;
+let rectHeight = fixedL*2;
+
+function drawRect(point) {
+	console.log(point.val, point.x, point.y,point.selected)
+
+	if (point.selected) {
+		ctx.strokeStyle = "red";
+	} else {
+		ctx.strokeStyle = "#0000ff";
+	}
+	ctx.beginPath();
+	drawText(point.val,point.x+(rectWidth/2), point.y+(rectHeight/2));
+	ctx.rect(point.x, point.y, rectWidth, rectHeight);
+	ctx.stroke();
+	ctx.closePath();
+}
+
+function drawText(text,x,y){	
+	ctx.font=`${fixedL}px Georgia`;
+	ctx.textAlign="center";
+	ctx.textBaseline="middle";
+	ctx.fillText(text,x,y);
+	ctx.closePath();
+}
+
+function drawNodeLine(startNode, endNode){
+	let startPoint = {x:startNode.x+(rectWidth/2),y:startNode.y};
+	let endPoint = {x:endNode.x+(rectWidth/2),y:endNode.y+rectHeight};
+
+	let centerY = (startPoint.y+endPoint.y)/2;
+	let pointOne = {x: startPoint.x, y: centerY};
+	let pointTwo = {x:endPoint.x,y:centerY};
+	ctx.beginPath();
+	ctx.strokeStyle = "#0000ff";
+	ctx.moveTo(startPoint.x,startPoint.y);
+	ctx.lineTo(pointOne.x,pointOne.y);
+	ctx.lineTo(pointTwo.x,pointTwo.y);
+	ctx.lineTo(endPoint.x,endPoint.y);
+	ctx.stroke();
+}
+
+function nodeTree(arrData){
+	function judgeDta(data,callback){
+		if(Object.prototype.toString.call(data).slice(8,-1) === 'Array'){
+			callback();
+		} else {
+			console.log('请传入数组');
+		}
+	}
+	this.rootNode = null;
+	function createNode(val){
+		this.selected = null;
+		this.left = null;
+		this.right = null;
+		this.val = val;
+		this.x = null;
+		this.y = null;
+	}
+	function readNode(oldNode, newNode){
+		newNode.y = oldNode.y + 6*fixedL;
+		if (newNode.val>oldNode.val) {
+			if (!oldNode.right) {
+				newNode.x = oldNode.x + 6*fixedL;
+				oldNode.right = newNode;
+ 			} else {
+ 				readNode(oldNode.right, newNode)
+ 			}
+		} else {
+			if (!oldNode.left) {
+				newNode.x = oldNode.x - 6*fixedL;
+				oldNode.left = newNode;
+ 			} else {
+ 				readNode(oldNode.left, newNode)
+ 			}
+		}
+	}
+	this.addNode = function(nodeData){
+		let newNode = new createNode(nodeData);
+		if (!this.rootNode) {
+			newNode.x = 500;
+			newNode.y = 10;
+			this.rootNode = newNode;
+		} else {
+			readNode(this.rootNode,newNode);
+		}
+	}
+	function drawNode(node, parentPoint=null){
+		drawRect(node);
+		parentPoint && drawNodeLine(node,parentPoint);
+		node.left && drawNode(node.left,node);
+		node.right && drawNode(node.right,node)
+	}
+	this.drawTree = function(){
+		drawNode(this.rootNode);
+	}
+	function initeNode(node,callback){
+		callback(node);
+		node.left && initeNode(node.left, callback);
+		node.right && initeNode(node.right, callback);
+	}
+	this.initTree = function(callback){
+		initeNode(this.rootNode,callback);
+	}
+	judgeDta(arrData,() => {
+		arrData.forEach((item)=>{
+			this.addNode(item);
+		})
+	})
+}
+
+let nowTree = new nodeTree([7,5,2,8,1,9,6,50,30,21]);
+nowTree.drawTree();
+
+</script>
+</body>
+</html>
