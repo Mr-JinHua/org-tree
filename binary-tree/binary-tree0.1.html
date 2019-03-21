@@ -6,8 +6,7 @@
 <body>
 <canvas onClick="canvasClick()" width="1500" height="1000" id="cans" />
 <script type="text/javascript">
-
-let fixedL = 20;
+let fixedL = 10;
 let canvas = document.getElementById('cans');
 let ctx = canvas.getContext('2d');
 
@@ -29,7 +28,6 @@ let rectWidth = fixedL*3;
 let rectHeight = fixedL*2;
 
 function drawRect(point) {
-	console.log(point.val, point.x, point.y,point.selected)
 	if (point.selected) {
 		ctx.strokeStyle = "red";
 	} else {
@@ -122,13 +120,18 @@ function nodeTree(arrData){
 	this.drawTree = function(){
 		drawNode(this.rootNode);
 	}
-	function initeNode(node,callback){
+	function initeNode(node, parentNode=null, callback, what='left'){
+		node.left && initeNode(node.left, node, callback);
+
+		if(node.left) node.left.x + 6*fixedL;
+		if(what === 'right') {
+			if(parentNode) node.x = parentNode.x + 6*fixedL;
+		}
 		callback(node);
-		node.left && initeNode(node.left, callback);
-		node.right && initeNode(node.right, callback);
+		node.right && initeNode(node.right, node, callback, 'right');
 	}
 	this.initTree = function(callback){
-		initeNode(this.rootNode, callback);
+		initeNode(this.rootNode,null, callback);
 	}
 	judgeDta(arrData,() => {
 		arrData.forEach((item) => {
@@ -137,7 +140,25 @@ function nodeTree(arrData){
 	})
 }
 
-let nowTree = new nodeTree([7,20,5,2,1,6,30,21]);
+let nowTree = new nodeTree([7,52,5,61,2,1,19,9,8,,10,6,50,30,21]);
+
+let traverseArrX = [];
+
+nowTree.initTree((data)=>{
+	console.log(data.val);
+	console.log(traverseArrX.includes(data.x),traverseArrX.length);
+	if(traverseArrX.includes(data.x)) {
+		let newfixX = data.x + 6*fixedL;
+		while(traverseArrX.includes(newfixX)){
+			newfixX += 6*fixedL;
+		}
+		traverseArrX.push(newfixX);
+		data.x = newfixX;
+	} else {
+		traverseArrX.push(data.x);
+	}
+});
+
 nowTree.drawTree();
 
 </script>
